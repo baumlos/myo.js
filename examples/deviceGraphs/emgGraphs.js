@@ -79,12 +79,23 @@ var updateGraph = function(emgData){
 
 }
 
+//++++++++++++++++++++++++++++++++++ hacky little myo poller addition ++++++++++++++++++++++++++++++++++++
 
+//const myForm = document.querySelector("#my-form");
+//myForm.addEventListener("submit", onSubmit);
 
+function relaxedEvent () {
+	console.log("start recording: relaxed");
+}
+function scissorEvent () {
+	console.log("start recording: scissor")
+}
+function paperEvent () {
+	console.log("start recording: paper")
+}
+function rockEvent () {
+	console.log("start recording: rock")
+}
 
-/*
-
-
-
-
-*/
+//TODO: collect myo data in 8-packs
+//save data as csv
