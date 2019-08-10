@@ -13,9 +13,24 @@ Myo.on('connected', function(){
 Myo.connect('com.myojs.emgGraphs');
 
 
+
 var rawData = [0,0,0,0,0,0,0,0];
 Myo.on('emg', function(data){
 	rawData = data;
+
+	//+++++ poller addition ++++
+	if(isRecording){
+		//push new array to current8pack
+		data.forEach((item) => current8Pack.push(item));
+
+		//push array to dataCollection if it's full
+		if(current8Pack.length == 64){
+			//console.log(current8Pack);
+			current8Pack.push(currentRecordingID);
+			dataCollection.push(current8Pack);
+			current8Pack = [];
+		}
+	}
 })
 
 
@@ -79,23 +94,81 @@ var updateGraph = function(emgData){
 
 }
 
-//++++++++++++++++++++++++++++++++++ hacky little myo poller addition ++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++ hacky little myo poller ++++++++++++++++++++++++++++++++++++
 
 //const myForm = document.querySelector("#my-form");
 //myForm.addEventListener("submit", onSubmit);
+var isRecording = false;
+var currentRecordingID;
 
-function relaxedEvent () {
-	console.log("start recording: relaxed");
-}
-function scissorEvent () {
-	console.log("start recording: scissor")
-}
-function paperEvent () {
-	console.log("start recording: paper")
-}
-function rockEvent () {
-	console.log("start recording: rock")
+var current8Pack = [];
+var dataCollection = [];
+
+function recordEvent(gestureID) {
+
+	if(isRecording){
+		console.log("stopped recording: "+ currentRecordingID);
+		isRecording = false;
+		currentRecordingID = undefined;
+		current8Pack = [];
+
+		console.log(dataCollection);
+	
+	}else{
+		currentRecordingID = gestureID;
+		console.log("start recording: "+currentRecordingID);
+		isRecording = true;
+	}
 }
 
-//TODO: collect myo data in 8-packs
-//save data as csv
+function convertArrayOfObjectsToCSV(args) {
+	var result, ctr, keys, columnDelimiter, lineDelimiter, data;
+
+	data = args.data || null;
+	if (data == null || !data.length) {
+		return null;
+	}
+
+	columnDelimiter = args.columnDelimiter || ';';
+	lineDelimiter = args.lineDelimiter || '\n';
+
+	keys = Object.keys(data[0]);
+
+	result = '';
+	result += "value,gesture"; //keys.join(columnDelimiter);
+	result += lineDelimiter;
+
+	data.forEach(function(item) {
+		ctr = 0;
+		keys.forEach(function(key) {
+			if (ctr > 0) result += columnDelimiter;
+
+			result += item[key];
+			ctr++;
+		});
+		result += lineDelimiter;
+	});
+
+	return result;
+}
+
+function exportCSV(args) {
+	var data, filename, link;
+
+	var csv = convertArrayOfObjectsToCSV({
+		data: dataCollection
+	});
+	if (csv == null) return;
+
+	filename = args.filename || 'export.csv';
+
+	if (!csv.match(/^data:text\/csv/i)) {
+		csv = 'data:text/csv;charset=utf-8,' + csv;
+	}
+	data = encodeURI(csv);
+
+	link = document.createElement('a');
+	link.setAttribute('href', data);
+	link.setAttribute('download', filename);
+	link.click();
+}

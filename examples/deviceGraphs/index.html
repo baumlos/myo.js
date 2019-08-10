@@ -31,10 +31,12 @@
 			<div id='pod7' class='emgGraph'></div>
 		</div>
  		<div>
-			<input type="button" id="entspanntBtn" value="Entspannt: Start" onclick="relaxedEvent();"/>
-			<input type="button" id="schere-btn" value="Schere: Start" onclick="scissorEvent();"/>
-			<input type="button" id="stein-btn" value="Stein: Start" onclick="paperEvent();"/>
-			<input type="button" id="papier-btn" value="Papier: Start" onclick="rockEvent();"/>
+			<input type="button" id="entspanntBtn" value="Entspannt" onclick="recordEvent(0);"/>
+			<input type="button" id="schere-btn" value="Schere" onclick="recordEvent(1);"/>
+			<input type="button" id="stein-btn" value="Stein" onclick="recordEvent(2);"/>
+			<input type="button" id="papier-btn" value="Papier" onclick="recordEvent(3);"/>
+			<br>
+			<input type="button" id="export-btn" value="Export csv" onclick='exportCSV({ filename: "myo-data.csv" });'/>
 		</div>
 
 	</body>
