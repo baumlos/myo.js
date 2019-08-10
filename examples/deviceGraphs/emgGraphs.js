@@ -96,8 +96,6 @@ var updateGraph = function(emgData){
 
 //++++++++++++++++++++++++++++++++++ hacky little myo poller ++++++++++++++++++++++++++++++++++++
 
-//const myForm = document.querySelector("#my-form");
-//myForm.addEventListener("submit", onSubmit);
 var isRecording = false;
 var currentRecordingID;
 
@@ -135,7 +133,7 @@ function convertArrayOfObjectsToCSV(args) {
 	keys = Object.keys(data[0]);
 
 	result = '';
-	result += "value,gesture"; //keys.join(columnDelimiter);
+	result += "value,gesture";
 	result += lineDelimiter;
 
 	data.forEach(function(item) {
