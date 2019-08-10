@@ -104,7 +104,8 @@ var updateGraph = function(emgData){
 			actionCounterCeddi++;			
 		}
 		else{
-			console.log(dataCollectionCeddi);
+			recordEvent();
+			//console.log(dataCollectionCeddi);
 		}
 	}
 
