@@ -7,7 +7,7 @@ Myo.on('connected', function(){
 
 	setInterval(function(){
 		updateGraph(rawData);
-	}, 25)
+	}, 100)
 })
 
 Myo.connect('com.myojs.emgGraphs');
@@ -17,20 +17,6 @@ Myo.connect('com.myojs.emgGraphs');
 var rawData = [0,0,0,0,0,0,0,0];
 Myo.on('emg', function(data){
 	rawData = data;
-
-	//+++++ poller addition ++++
-	if(isRecording){
-		//push new array to current8pack
-		data.forEach((item) => current8Pack.push(item));
-
-		//push array to dataCollection if it's full
-		if(current8Pack.length == 64){
-			//console.log(current8Pack);
-			current8Pack.push(currentRecordingID);
-			dataCollection.push(current8Pack);
-			current8Pack = [];
-		}
-	}
 })
 
 
@@ -82,6 +68,10 @@ var formatFlotData = function(data){
 
 var updateGraph = function(emgData){
 
+	//+++++ myo poller addition +++++++++
+	var emgDataClone = [...emgData];
+	var emgDataCloneCeddi =  [...emgData];
+
 	graphData.map(function(data, index){
 		graphData[index] = graphData[index].slice(1);
 		graphData[index].push(emgData[index]);
@@ -92,15 +82,45 @@ var updateGraph = function(emgData){
 
 	})
 
+	//++++++++++++++++++++++++++++++++++ hacky little myo poller ++++++++++++++++++++++++++++++++++++
+
+	if(isRecording){
+		//push new array to current8pack
+		emgDataClone.forEach((item) => current8Pack.push(item));
+	
+		//push array to dataCollection if it's full
+		if(current8Pack.length == 64){
+			//console.log(current8Pack);
+			current8Pack.push(currentRecordingID);
+			dataCollection.push(current8Pack);
+			current8Pack = [];
+		}
+
+		//Ceddi data part
+		if(actionCounterCeddi < 40){
+			emgDataCloneCeddi.push(currentRecordingID);
+			emgDataCloneCeddi.push(actionNumberCeddi);
+			dataCollectionCeddi.push(emgDataCloneCeddi);
+			actionCounterCeddi++;			
+		}
+		else{
+			console.log(dataCollectionCeddi);
+		}
+	}
+
 }
-
-//++++++++++++++++++++++++++++++++++ hacky little myo poller ++++++++++++++++++++++++++++++++++++
-
+ 
 var isRecording = false;
 var currentRecordingID;
 
 var current8Pack = [];
 var dataCollection = [];
+
+//2nd data format for ceddis csv files
+var current8PackCeddi = [];
+var dataCollectionCeddi = [];
+var actionCounterCeddi = 0;
+var actionNumberCeddi = -1;
 
 function recordEvent(gestureID) {
 
@@ -110,10 +130,14 @@ function recordEvent(gestureID) {
 		currentRecordingID = undefined;
 		current8Pack = [];
 
+		console.log("action number: " + actionNumberCeddi + " action counter: " + actionCounterCeddi);
+		actionCounterCeddi = 0;
+		
 		console.log(dataCollection);
 	
 	}else{
 		currentRecordingID = gestureID;
+		actionNumberCeddi++;
 		console.log("start recording: "+currentRecordingID);
 		isRecording = true;
 	}
@@ -133,7 +157,7 @@ function convertArrayOfObjectsToCSV(args) {
 	keys = Object.keys(data[0]);
 
 	result = '';
-	result += "value,gesture";
+	result += args.prefix;
 	result += lineDelimiter;
 
 	data.forEach(function(item) {
@@ -152,21 +176,39 @@ function convertArrayOfObjectsToCSV(args) {
 
 function exportCSV(args) {
 	var data, filename, link;
+	var dataCeddi, filenameCeddi, linkCeddi;
 
 	var csv = convertArrayOfObjectsToCSV({
+		prefix: "value,gesture",
 		data: dataCollection
 	});
+	var csvCeddi = convertArrayOfObjectsToCSV({
+		columnDelimiter: ',',
+		prefix: "Myo1,Myo2,Myo3,Myo4,Myo5,Myo6,Myo7,Myo8,GestureID,ActionNumber",
+		data: dataCollectionCeddi
+	});
+
 	if (csv == null) return;
 
 	filename = args.filename || 'export.csv';
+	filenameCeddi = "ceddi-format-" + filename; 
 
 	if (!csv.match(/^data:text\/csv/i)) {
 		csv = 'data:text/csv;charset=utf-8,' + csv;
 	}
+	if (!csvCeddi.match(/^data:text\/csv/i)) {
+		csvCeddi = 'data:text/csv;charset=utf-8,' + csvCeddi;
+	}
 	data = encodeURI(csv);
+	dataCeddi = encodeURI(csvCeddi);
 
 	link = document.createElement('a');
 	link.setAttribute('href', data);
 	link.setAttribute('download', filename);
 	link.click();
+
+	linkCeddi = document.createElement('a');
+	linkCeddi.setAttribute('href', dataCeddi);
+	linkCeddi.setAttribute('download', filenameCeddi);
+	linkCeddi.click();
 }
